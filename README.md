@@ -1,8 +1,8 @@
-# Demo how to use spark streaming + Kafka + Kudu
+# Demo how to use Spark Streaming + Kafka + Kudu
 
 ## Business Use Case
 
-The streaming application reads real-time security market price from Kafka, de-duplication based on timestamp, then update portfolio position value in Kudu
+The spark streaming application reads real-time security market price from Kafka, de-duplication based on timestamp, then update portfolio position value in Kudu
 
 ## Environments
 
