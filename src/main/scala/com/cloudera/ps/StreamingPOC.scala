@@ -40,7 +40,7 @@ object StreamingPOC {
       "enable.auto.commit" -> (false: java.lang.Boolean)
     )
     val sparkSession = SparkSession.builder.getOrCreate()
-    import sparkSession.implicits._
+
     val topics = Array("securities")
     val stream = KafkaUtils.createDirectStream[String, String](
       ssc,
@@ -62,12 +62,14 @@ object StreamingPOC {
       val sparkSession = SparkSession.builder.getOrCreate()
       import sparkSession.implicits._
       val securitiesDF = rdd.map(a => SimpleSecurities(a(0), a(1), a(2).toLong, a(3), a(4).toDouble)).toDF()
-      //val securitiesDFNoBigInt = securitiesDF.drop("as_of")
+
+
       val kuduMasters = "ip-10-0-0-29.us-west-2.compute.internal:7051"
       val positionRawTableName = "impala::default.positions_kudu_raw"
       val positionValueTableName = "impala::default.positions_kudu_value"
       val securitiesTableName = "impala::default.securities_kudu"
 
+      //deduplicate based on timestamp for each security. Only keep the latest timestamp for each microbatch
       val securitiesLatestDF = securitiesDF.groupBy($"security_code_primary").agg(max($"as_of_timestamp").alias("as_of_timestamp"))
       val securitiesFinalDF = securitiesDF.join(securitiesLatestDF, Seq("security_code_primary", "as_of_timestamp"))
       securitiesFinalDF.cache()
@@ -78,14 +80,10 @@ object StreamingPOC {
       kuduContext.upsertRows(securitiesFinalDF, securitiesTableName)
 
       // Calculate Positions Value and update them
-
-
       val kuduOptions: Map[String, String] = Map(
         "kudu.table"  -> positionRawTableName,
         "kudu.master" -> kuduMasters)
-      /*    val sc = new SparkContext()
-          val sqlContext = new SQLContext(sc)
-          sqlContext.read.options(kuduOptions).kudu.show*/
+
       val positionsDF = sparkSession.read.options(kuduOptions).kudu.
         select("as_of_date", "portfolio_code", "security_code_primary", "units")
 
