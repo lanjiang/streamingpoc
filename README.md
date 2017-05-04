@@ -1,12 +1,18 @@
-# Demo how to stop the spark streaming gracefully
-Example to show how to stop the Spark Streaming application gracefully.
+# Demo how to use spark streaming + Kafka + Kudu
+## Business Use Case
 
-Spark submit command:
+The streaming application reads real-time security market price from Kafka, de-duplication based on timestamp, then update portfolio position value in Kudu
 
-`spark-submit --class com.cloudera.ps.GracefulShutdownExample --master yarn --deploy-mode cluster --num-executors 3 /tmp/streamingstopgraceful-1.0-SNAPSHOT.jar`
+## Environments
 
-To shutdown the streaming app gracefully, place a file named "shutdownmarker" to HDFS /tmp folder
+The Demo was executed in CDH 5.11 in AWS. The cluster was created by Cloudera Director
+Kudu version is 1.3
+Kafka version is 0.10
+Spark version is 2.1
 
-`hdfs dfs -put shutdownmarker /tmp/shutdownmarker`
+## How to run the streaming application
 
-For a detailed review of how to stop spark streaming gracefully, please visit [my blog] (http://blog.parseconsulting.com/2017/02/how-to-shutdown-spark-streaming-job.html)
+Spark submit command
+
+`spark2-submit --class com.cloudera.ps.StreamingPOC --conf spark.streaming.kafka.maxRatePerPartition=100 streamingpoc-1.0-SNAPSHOT-jar-with-dependencies.jar`
+
